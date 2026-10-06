@@ -48,6 +48,27 @@ topologia Matriz + Filial, VLANs, Router-on-a-Stick, WAN estática, DHCP e NAT.
 
 - Matriz VLAN 5/8/10 e Filial VLAN 1/10: IP a partir de `.21`, GW da VLAN, DNS `192.168.3.10`
 
+## Credenciais do lab
+
+> **Somente ambiente acadêmico / Packet Tracer.** Não usar em produção.  
+> Equipamentos: RT-00, RT-01, RT-02, SW-01, SW-02.
+
+| Onde | Usuário / modo | Senha |
+| --- | --- | --- |
+| Enable (roteadores e switches) | modo privileged (`enable`) | `Senai@Enable2026` |
+| Login SSH / console | usuário `admin` | `Senai@Admin2026` |
+| Wi-Fi IoT Matriz — SSID `REDE_IOT_MATRIZ` | WPA2-Personal | `Senai@IoT2026` |
+| Wi-Fi IoT Filial — SSID `REDE_IOT_FILIAL` | WPA2-Personal | `Senai@IoT2026` |
+
+**Como logar (exemplo SSH):**
+
+```text
+ssh admin@<IP-do-equipamento>
+# senha: Senai@Admin2026
+enable
+# senha: Senai@Enable2026
+```
+
 ## Arquivos
 
 | Arquivo | Descrição |
@@ -119,7 +140,7 @@ PC> ipconfig /all   (DNS deve ser 192.168.3.10)
 | ACL IoT Filial → nega TI da Matriz | RT-01 `ACL_FILIAL_IOT_IN` |
 | Port security + DHCP snooping + portas ociosas down | SW-01, SW-02 |
 
-**Lab only:** `admin` / `Senai@Admin2026`, enable `Senai@Enable2026` — não usar em produção.
+Credenciais do lab (enable, SSH e Wi-Fi): ver seção **[Credenciais do lab](#credenciais-do-lab)**.
 
 ## O que foi corrigido / completado
 
