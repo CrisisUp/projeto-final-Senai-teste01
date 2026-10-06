@@ -1,0 +1,56 @@
+=========================================================================
+ CONFIGURACAO DOS ROTEADORES WI-FI IOT (Cisco Packet Tracer: WRT300N)
+ Modelos de GUI — nao sao comandos Cisco IOS
+=========================================================================
+
+-------------------------------------------------------------------------
+ WIFI-MATRIZ  (Matriz — porta WAN no SW-02 f0/6, VLAN 10)
+-------------------------------------------------------------------------
+Interface WAN (Internet Setup):
+  Connection Type : Static IP
+  IP Address      : 192.168.10.2
+  Subnet Mask     : 255.255.255.0
+  Default Gateway : 192.168.10.1   (subif g0/0.10 do RT-02)
+  DNS 1           : 192.168.3.10   (Servidor Matriz)
+
+Interface LAN / WLAN (Network Setup):
+  Router IP       : 192.168.15.1
+  Subnet Mask     : 255.255.255.0
+  DHCP Server     : Enabled
+  Start IP        : 192.168.15.100
+  Max Users       : 50   (faixa efetiva ate .149)
+
+Wireless:
+  SSID            : REDE_IOT_MATRIZ
+  Security        : WPA2-Personal (AES)
+  Passphrase      : Senai@IoT2026
+
+-------------------------------------------------------------------------
+ WIFI-FILIAL  (Filial — porta WAN no SW-01 f0/6, VLAN 10)
+-------------------------------------------------------------------------
+Interface WAN (Internet Setup):
+  Connection Type : Static IP
+  IP Address      : 192.168.56.2
+  Subnet Mask     : 255.255.255.0
+  Default Gateway : 192.168.56.1   (subif g0/0.10 do RT-01)
+  DNS 1           : 192.168.3.10   (Servidor Matriz — via WAN/RT)
+
+Interface LAN / WLAN (Network Setup):
+  Router IP       : 192.168.57.1
+  Subnet Mask     : 255.255.255.0
+  DHCP Server     : Enabled
+  Start IP        : 192.168.57.100
+  Max Users       : 50
+
+Wireless:
+  SSID            : REDE_IOT_FILIAL
+  Security        : WPA2-Personal (AES)
+  Passphrase      : Senai@IoT2026
+
+-------------------------------------------------------------------------
+ NOTAS
+-------------------------------------------------------------------------
+- IPs WAN estaticos para nao dependerem de DHCP do lado corporativo.
+- DNS sempre apontando para o servidor da Matriz (192.168.3.10).
+- LAN/WLAN em sub-redes proprias (15.0/24 e 57.0/24), isoladas das VLANs.
+- No .pkt, conecte a porta WAN do WRT300N a VLAN 10 do switch correspondente.

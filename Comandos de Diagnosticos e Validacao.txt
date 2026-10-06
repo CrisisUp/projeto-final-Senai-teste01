@@ -1,69 +1,144 @@
-show vlan brief (no switch): 
-Lista as VLANs ativas e quais portas físicas estão vinculadas a cada uma.
+=========================================================================
+ COMANDOS DE DIAGNOSTICO E VALIDACAO
+ Cisco IOS (roteadores/switches) + hosts (PCs/servidores)
+=========================================================================
 
-show interfaces trunk (no switch): 
-Confirma o funcionamento da porta em modo tronco (802.1q) e as VLANs permitidas.
+1. VALIDACAO RAPIDA (inicio da revisao)
+-------------------------------------------------------------------------
+No switch (SW-01 / SW-02):
+  show vlan brief
+    Lista as VLANs ativas e quais portas fisicas estao vinculadas a cada uma.
 
-show ip interface brief (no roteador): 
-Confirma se a interface física g0/0 e as subinterfaces (.3, .5, .8, .10) estão em estado up/up.
+  show interfaces trunk
+    Confirma a porta em modo trunk (802.1q) e as VLANs permitidas.
 
-ping  (no prompt dos computadores): 
-Testa a comunicação inter-VLAN validando o encaminhamento de pacotes pelo gateway.
+No roteador (RT-00 / RT-01 / RT-02):
+  show ip interface brief
+    Confirma se as interfaces fisicas e subinterfaces estao up/up.
 
+Nos computadores:
+  ping <gateway>
+    Testa comunicacao com o gateway local.
 
-Quais outros comandos úteis para diagnóstico, validação ou debug?
-
-Para complementar a sua documentação técnica, aqui estão os comandos essenciais do Cisco IOS e dos hosts divididos por finalidade:
-
-1. Comutador (SW-02) — Diagnóstico de Camada 2
-show running-config: Exibe toda a configuração ativa na memória RAM do switch. Útil para revisar rapidamente portas, VLANs e trunks configurados.
-
-show interface  switchport (ex.: show interface gigabitEthernet 0/1 switchport): 
-Mostra o status detalhado de camada 2 da porta (se está em modo trunk ou access, qual a VLAN nativa e modo de encapsulamento).
-
-show mac address-table dynamic: 
-Lista apenas os endereços MAC aprendidos dinamicamente pelo switch em cada porta e VLAN, confirmando se os dispositivos estão trafegando dados.
-
-show spanning-tree: 
-Exibe o status do Spanning Tree Protocol (STP) por VLAN, mostrando quais portas estão em estado de encaminhamento (Forwarding) ou bloqueadas (Blocking) para evitar loops.
-
-show interfaces status: Tabela resumida com todas as portas do switch, indicando estado do link (connected/notconnect), duplex, velocidade e a VLAN à qual cada interface está associada.
-
-2. Roteador (RT-02) — Diagnóstico de Camada 3 e Roteamento
-show ip route: Exibe a tabela de roteamento do roteador. Mostra as redes diretamente conectadas (C), rotas locais (L) e rotas estáticas ou dinâmicas aprendidas.
-
-show ip arp: 
-Exibe a tabela ARP do roteador, associando os endereços IP de cada subinterface aos respectivos endereços físicos (MAC) dos computadores e servidores.
-
-show ip interface  (ex.: show ip interface gigabitEthernet 0/0.5): 
-Traz detalhes completos de camada 3 de uma interface/subinterface específica (MTU, status de broadcast, se há ACLs aplicadas).
-
-traceroute : 
-Rastreia salto a salto o caminho que o pacote percorre pela rede até alcançar o destino, fundamental para identificar em qual roteador a conexão está parando.
-
-3. Comandos de Debug em Tempo Real (Roteador/Switch)
-Atenção: Em ambientes de produção reais, execute o debug com filtros para não sobrecarregar a CPU. No Packet Tracer, seu uso é seguro para fins de aprendizado.
-
-debug ip icmp: 
-Mostra em tempo real no terminal os pacotes de ping (echo request e echo reply) chegando e saindo do roteador, facilitando ver se a máquina de origem enviou o pacote e se o destino respondeu.
-
-debug ip packet: 
-Exibe os cabeçalhos de todos os pacotes IP que passam pelo roteador (origem, destino e protocolo).
-
-undebug all (ou abreviado un all): 
-Comando obrigatório após usar qualquer comando de debug; desativa todos os monitoramentos ativos no terminal.
-
-4. Dispositivos Finais (PCs e Servidores)
-arp -a: 
-Executado no Command Prompt do computador. Exibe os IPs e endereços MAC resolvidos recentemente na mesma sub-rede (ou o MAC do próprio Gateway).
-
-tracert : 
-Equivalente ao traceroute no Windows/Packet Tracer PC. Útil para verificar se o computador consegue alcançar o gateway e saltar para os próximos roteadores.
-
-netstat -r: 
-Mostra a tabela de rotas do próprio computador, permitindo verificar qual é a rota padrão (Default Gateway) ativa na máquina.
+  ping 192.168.3.10
+    Testa alcance do servidor DNS da Matriz (quando ha rota).
 
 
+2. COMUTADOR — DIAGNOSTICO DE CAMADA 2
+-------------------------------------------------------------------------
+show running-config
+  Exibe a configuracao ativa na RAM. Revisar portas, VLANs e trunks.
 
-RT-02#show running-config
-SW-02#show running-config
+show interfaces switchport
+  Ex.: show interfaces gigabitEthernet 0/1 switchport
+  Status detalhado da camada 2: modo (trunk/access), VLAN nativa, encapsulacao.
+
+show interfaces status
+  Tabela resumida: link (connected/notconnect), duplex, velocidade e VLAN.
+
+show mac address-table dynamic
+  Endereços MAC aprendidos dinamicamente por porta e VLAN.
+
+show spanning-tree
+  STP por VLAN: portas Forwarding vs Blocking (evita loops).
+
+show interfaces counters
+  Contadores de erros/colisoes por interface.
+
+
+3. ROTEADOR — DIAGNOSTICO DE CAMADA 3 E ROTEAMENTO
+-------------------------------------------------------------------------
+show ip route
+  Tabela de rotas: conectadas (C), locais (L), estaticas (S), padrao (S*).
+
+show ip arp
+  Tabela ARP: IP <-> MAC dos vizinhos e hosts.
+
+show ip interfaces
+  Ex.: show ip interfaces gigabitEthernet 0/0.5
+  Detalhes L3 de interface/subinterface (MTU, broadcast, ACLs).
+
+show ip dhcp binding
+  Clientes DHCP atualmente vinculados (quando ha pools configurados).
+
+show ip nat translations
+  Traducoes NAT ativas (importante validar no RT-00).
+
+show ip nat statistics
+  Contadores de NAT (inside/outside, overflow).
+
+traceroute <destino>
+  Caminho salto a salto ate o destino. Identifica onde o pacote para.
+
+
+4. DEBUG EM TEMPO REAL (roteador/switch)
+-------------------------------------------------------------------------
+Atencao: em producao real use filtros. No Packet Tracer e seguro p/ aprendizado.
+
+debug ip icmp
+  Pacotes ping (echo request/reply) entrando e saindo do roteador.
+
+debug ip packet
+  Cabecalhos IP que passam pelo roteador (origem, destino, protocolo).
+
+debug ip nat
+  Eventos de traducao NAT (util no RT-00).
+
+undebug all   (ou: un all)
+  Obrigatorio apos qualquer debug — desativa todos os monitoramentos.
+
+
+5. DISPOSITIVOS FINAIS (PCs e servidores)
+-------------------------------------------------------------------------
+arp -a
+  IPs e MACs resolvidos na sub-rede (ou o MAC do gateway).
+
+tracert <destino>
+  Equivalente Windows do traceroute.
+
+netstat -r
+  Tabela de rotas do PC; confere a rota padrao (Default Gateway).
+
+ipconfig /all
+  IP, mascara, gateway, DNS e se o endereco veio de DHCP ou estatico.
+
+nslookup
+  Testa resolucao DNS (ex.: nslookup servidor-matriz.local).
+
+
+6. CENARIOS DE TESTE RECOMENDADOS
+-------------------------------------------------------------------------
+A) Filial -> Matriz (inter-VLAN / inter-sede)
+   PC-01 (VLAN 1 filial) -> ping 192.168.3.10 (servidor)
+   Esperado: sucesso via SW-01 -> RT-01 -> RT-00 -> RT-02 -> SW-02
+   Se falhar: tracert 192.168.3.10 e debug ip icmp no caminho.
+
+B) Matriz interna (VLAN 5 -> VLAN 8)
+   PC-04 -> ping 192.168.8.1 (gateway TI) e host da VLAN 8
+   Esperado: sucesso via SW-02 -> RT-02 (subinterfaces).
+
+C) Acesso a Internet
+   PC qualquer -> ping 8.8.8.8 e tracert ate a borda
+   Esperado: sai por RT-00 g0/0 com NAT (show ip nat translations).
+
+D) Wi-Fi IoT
+   Device na SSID REDE_IOT_MATRIZ
+   - Obtem IP 192.168.15.1xx (DHCP do WRT300N)
+   - ping 192.168.15.1 (gateway WLAN)
+   - ping 192.168.3.10 (DNS/servidor via WAN do roteador Wi-Fi)
+
+E) Validacao de trunk
+   SW-01/SW-02: show interfaces trunk
+   Esperado: modo trunk, VLANs permitidas exatamente as configuradas.
+
+
+7. CAPTURAS PARA A DOCUMENTACAO
+--------------------------------------------------------------------------
+Anexe ao relatorio:
+  - RT-02#show running-config
+  - SW-02#show running-config
+  - SW-01#show vlan brief
+  - SW-02#show interfaces trunk
+  - RT-00#show ip route
+  - RT-00#show ip nat translations
+  - Saida de ping e tracert entre Filial e Matriz

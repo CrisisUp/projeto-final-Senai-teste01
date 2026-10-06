@@ -1,34 +1,43 @@
+! =========================================================
+! RT-02 — Roteador da Matriz (Router-on-a-Stick)
+! VLANs: 3 Servidores | 5 Colaboradores | 8 TI | 10 IoT
+! =========================================================
 enable
 configure terminal
 
-! 1. Definir o nome do roteador
+! 1. Nome do equipamento
 hostname RT-02
 
-! 2. Interface fisica conectada ao switch
+! 2. Interface fisica conectada ao SW-02 (trunk, sem IP)
 interface gigabitEthernet 0/0
  description TRUNK_LOCAL_SW-02
  no shutdown
  exit
 
 ! 3. Subinterfaces (Gateways das VLANs)
+
+! VLAN 3 — Servidores
 interface gigabitEthernet 0/0.3
  description GATEWAY_VLAN03_SERVIDORES
  encapsulation dot1Q 3
  ip address 192.168.3.1 255.255.255.0
  exit
 
+! VLAN 5 — Colaboradores
 interface gigabitEthernet 0/0.5
  description GATEWAY_VLAN05_COLABORADORES
  encapsulation dot1Q 5
  ip address 192.168.5.1 255.255.255.0
  exit
 
+! VLAN 8 — TI
 interface gigabitEthernet 0/0.8
  description GATEWAY_VLAN08_TI
  encapsulation dot1Q 8
  ip address 192.168.8.1 255.255.255.0
  exit
 
+! VLAN 10 — IoT
 interface gigabitEthernet 0/0.10
  description GATEWAY_VLAN10_IOT
  encapsulation dot1Q 10
@@ -38,28 +47,46 @@ interface gigabitEthernet 0/0.10
 ! 4. Interface WAN de subida para o RT-00
 interface gigabitEthernet 0/1
  description LINK_WAN_RT-00
- exit
-
-! 5. Salvar configuracoes
-end
-write memory
-
-
-enable
-configure terminal
-
-! 1. Configuracao da interface WAN
-interface gigabitEthernet 0/1
- description LINK_WAN_RT-00
  ip address 10.0.0.2 255.255.255.252
  duplex auto
  speed auto
  no shutdown
  exit
 
-! 2. Rota padrao de saida da Matriz para a borda/nuvem
+! 5. Rota padrao de saida da Matriz para a borda/nuvem (RT-00)
 ip route 0.0.0.0 0.0.0.0 10.0.0.1
 
-! 3. Salvar configuracoes
+! 6. Excecoes DHCP (gateways e IPs estaticos conhecidos)
+ip dhcp excluded-address 192.168.3.1 192.168.3.20
+ip dhcp excluded-address 192.168.5.1 192.168.5.20
+ip dhcp excluded-address 192.168.8.1 192.168.8.20
+ip dhcp excluded-address 192.168.10.1 192.168.10.20
+
+! 7. DHCP — VLAN 5 (Colaboradores)
+!    Servidor Matriz fica estatico em 192.168.3.10
+ip dhcp pool DHCP_MATRIZ_VLAN5
+ network 192.168.5.0 255.255.255.0
+ default-router 192.168.5.1
+ dns-server 192.168.3.10
+ domain-name matriz.local
+ lease 1 0 0
+
+! 8. DHCP — VLAN 8 (TI)
+ip dhcp pool DHCP_MATRIZ_VLAN8
+ network 192.168.8.0 255.255.255.0
+ default-router 192.168.8.1
+ dns-server 192.168.3.10
+ domain-name matriz.local
+ lease 1 0 0
+
+! 9. DHCP — VLAN 10 (IoT wireless; roteador Wi-Fi usa IP estatico .2)
+ip dhcp pool DHCP_MATRIZ_VLAN10
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 192.168.3.10
+ domain-name iot.local
+ lease 1 0 0
+
+! 10. Salvar configuracoes
 end
 write memory

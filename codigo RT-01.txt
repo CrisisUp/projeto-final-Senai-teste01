@@ -1,7 +1,36 @@
-! 1. Definir o nome do equipamento
+! =========================================================
+! RT-01 — Roteador da Filial
+! LAN: VLAN 1 (PCs) + VLAN 10 (IoT/Wireless) via Router-on-a-Stick
+! =========================================================
+enable
+configure terminal
+
+! 1. Nome do equipamento
 hostname RT-01
 
-! 2. Ativar a interface WAN conectada ao RT-00
+! 2. Interface fisica conectada ao SW-01 (trunk, sem IP)
+interface gigabitEthernet 0/0
+ description TRUNK_LOCAL_SW-01
+ no shutdown
+ exit
+
+! 3. Subinterfaces (Gateways das VLANs da Filial)
+
+! VLAN 1 — Rede local dos PCs
+interface gigabitEthernet 0/0.1
+ description GATEWAY_VLAN01_FILIAL
+ encapsulation dot1Q 1
+ ip address 192.168.55.1 255.255.255.0
+ exit
+
+! VLAN 10 — IoT / Wireless da Filial
+interface gigabitEthernet 0/0.10
+ description GATEWAY_VLAN10_IOT_FILIAL
+ encapsulation dot1Q 10
+ ip address 192.168.56.1 255.255.255.0
+ exit
+
+! 4. Interface WAN conectada ao RT-00 (borda)
 interface gigabitEthernet 0/1
  description LINK_WAN_RT-00
  ip address 10.100.0.2 255.255.255.252
@@ -10,24 +39,28 @@ interface gigabitEthernet 0/1
  no shutdown
  exit
 
-! 3. Rota padrao de saida da Filial apontando para a borda (RT-00)
+! 5. Rota padrao de saida da Filial apontando para a borda (RT-00)
 ip route 0.0.0.0 0.0.0.0 10.100.0.1
 
-! 4. Salvar configuracoes
-end
-write memory
+! 6. DHCP — VLAN 1 (PCs da Filial)
+ip dhcp excluded-address 192.168.55.1 192.168.55.10
+ip dhcp excluded-address 192.168.56.1 192.168.56.10
 
+ip dhcp pool DHCP_FILIAL_VLAN1
+ network 192.168.55.0 255.255.255.0
+ default-router 192.168.55.1
+ dns-server 8.8.8.8 8.8.4.4
+ domain-name filial.local
+ lease 0 8 0
 
+! 7. DHCP — VLAN 10 (dispositivos IoT wireless da Filial)
+ip dhcp pool DHCP_FILIAL_VLAN10
+ network 192.168.56.0 255.255.255.0
+ default-router 192.168.56.1
+ dns-server 192.168.3.10
+ domain-name iot.local
+ lease 1 0 0
 
-configure terminal
-
-interface gigabitEthernet 0/0
- description LAN_FILIAL_SW-01
- ip address 192.168.55.1 255.255.255.0
- duplex auto
- speed auto
- no shutdown
- exit
-
+! 8. Salvar configuracoes
 end
 write memory

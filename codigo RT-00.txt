@@ -1,38 +1,64 @@
-! Definir o nome do equipamento (caso ainda nao esteja definido)
+! =========================================================
+! RT-00 — Roteador de Borda (Matriz <-> Filial <-> Internet)
+! =========================================================
+enable
+configure terminal
+
+! 1. Nome do equipamento
 hostname RT-00
 
-! Ativar a interface g0/2 conectada ao RT-02
-interface gigabitEthernet 0/2
- description LINK_WAN_RT-02_MATRIZ
- ip address 10.0.0.1 255.255.255.252
+! 2. Interface WAN para a Internet / Cloud
+!    Ajuste o IP conforme o dispositivo Cloud/ISP no arquivo .pkt
+interface gigabitEthernet 0/0
+ description LINK_INTERNET_CLOUD
+ ip address 200.100.50.1 255.255.255.252
+ ip nat outside
  duplex auto
  speed auto
  no shutdown
  exit
 
-! Rotas de retorno para as VLANs da Rede Matriz via RT-02 (10.0.0.2)
+! 3. Interface WAN conectada ao RT-02 (Matriz)
+interface gigabitEthernet 0/2
+ description LINK_WAN_RT-02_MATRIZ
+ ip address 10.0.0.1 255.255.255.252
+ ip nat inside
+ duplex auto
+ speed auto
+ no shutdown
+ exit
+
+! 4. Interface WAN conectada ao RT-01 (Filial)
+interface gigabitEthernet 0/1
+ description LINK_WAN_RT-01_FILIAL
+ ip address 10.100.0.1 255.255.255.252
+ ip nat inside
+ duplex auto
+ speed auto
+ no shutdown
+ exit
+
+! 5. Rotas de retorno para as VLANs da Rede Matriz via RT-02 (10.0.0.2)
 ip route 192.168.3.0 255.255.255.0 10.0.0.2
 ip route 192.168.5.0 255.255.255.0 10.0.0.2
 ip route 192.168.8.0 255.255.255.0 10.0.0.2
 ip route 192.168.10.0 255.255.255.0 10.0.0.2
+ip route 192.168.15.0 255.255.255.0 10.0.0.2
 
-! Guardar configuracoes
-end
-write memory
-
-
-! 1. Configuracao da interface WAN conectada a Filial
-interface gigabitEthernet 0/1
- description LINK_WAN_RT-01_FILIAL
- ip address 10.100.0.1 255.255.255.252
- duplex auto
- speed auto
- no shutdown
- exit
-
-! 2. Rota estatica de retorno para a sub-rede da Filial (192.168.55.0/24) via RT-01
+! 6. Rotas de retorno para a rede da Filial via RT-01 (10.100.0.2)
 ip route 192.168.55.0 255.255.255.0 10.100.0.2
+ip route 192.168.56.0 255.255.255.0 10.100.0.2
+ip route 192.168.57.0 255.255.255.0 10.100.0.2
 
-! 3. Guardar alteracoes
+! 7. Rota padrao para a Internet (Cloud/ISP)
+ip route 0.0.0.0 0.0.0.0 200.100.50.2
+
+! 8. NAT (sobrecarga) para acesso a Internet
+access-list 1 permit 192.168.0.0 0.0.255.255
+access-list 1 permit 10.0.0.0 0.0.0.3
+access-list 1 permit 10.100.0.0 0.0.0.3
+ip nat inside source list 1 interface gigabitEthernet 0/0 overload
+
+! 9. Salvar configuracoes
 end
 write memory

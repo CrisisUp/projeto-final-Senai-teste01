@@ -1,20 +1,137 @@
-! =========================================================
-! DOCUMENTAÇÃO: ROTEADOR WI-FI IOT (WRT300N)
-! =========================================================
-! Interface WAN (Internet Setup):
-! - Connection Type: Static IP
-! - IP: 192.168.10.2
-! - Mask: 255.255.255.0
-! - Default Gateway: 192.168.10.1 (RT-02 Subinterface g0/0.10)
-! - DNS 1: 192.168.3.10 (Servidor Matriz)
+=========================================================================
+ DOCUMENTACAO TECNICA — Projeto de Redes (SENAI)
+ Matriz + Filial | VLANs | Router-on-a-Stick | WAN estática | NAT
+=========================================================================
 
-! Interface LAN / WLAN (Network Setup):
-! - Router IP: 192.168.15.1
-! - Subnet Mask: 255.255.255.0
-! - DHCP Server: Enabled
-! - Range DHCP: 192.168.15.100 - 192.168.15.149
+1. VISAO GERAL
+--------------------------------------------------------------------------
+Topologia corporativa com duas sedes interligadas por WAN estática e
+borda com Internet via NAT overload.
 
-! Parâmetros de Rede Sem Fios (Wireless):
-! - SSID: REDE_IOT_MATRIZ
-! - Security: WPA2-Personal (AES)
-! - Passphrase: Senai@IoT2026
+                    [Internet / Cloud]
+                          |
+                     RT-00 (Borda)
+                    /            \
+            10.0.0.0/30      10.100.0.0/30
+                 |                  |
+           RT-02 (Matriz)      RT-01 (Filial)
+                 |                  |
+           SW-02 (Matriz)      SW-01 (Filial)
+                 |                  |
+        VLANs 3/5/8/10       VLAN 1 (PCs)
+        + Wi-Fi IoT          + VLAN 10 (IoT)
+
+
+2. EQUIPAMENTOS
+--------------------------------------------------------------------------
+| Hostname | Dispositivo              | Papel                          |
+|----------|--------------------------|--------------------------------|
+| RT-00    | Router Cisco (borda)     | WAN Matriz/Filial + Internet   |
+| RT-01    | Router Cisco (filial)    | Gateway filial (on-a-stick)    |
+| RT-02    | Router Cisco (matriz)    | Gateway matriz (on-a-stick)    |
+| SW-01    | Switch Cisco 2960        | Access filial                  |
+| SW-02    | Switch Cisco 2960        | Access matriz                  |
+| WIFI-MAT | WRT300N                  | Wi-Fi IoT matriz               |
+| WIFI-FIL | WRT300N                  | Wi-Fi IoT filial               |
+| Server   | PC-Server                | DNS/Servidor matriz            |
+
+
+3. PLANO DE ENDERECAMENTO
+--------------------------------------------------------------------------
+3.1 WANs (ponto a ponto /30)
+| Link              | Rede             | Extremidades                    |
+|-------------------|------------------|---------------------------------|
+| RT-00 <-> RT-02   | 10.0.0.0/30      | .1 = RT-00 | .2 = RT-02       |
+| RT-00 <-> RT-01   | 10.100.0.0/30    | .1 = RT-00 | .2 = RT-01       |
+| RT-00 <-> Cloud   | 200.100.50.0/30  | .1 = RT-00 | .2 = ISP/Cloud  |
+
+3.2 Rede Matriz (atraves de RT-02 / SW-02)
+| VLAN | Nome           | Sub-rede           | Gateway       | DHCP          |
+|------|----------------|--------------------|---------------|---------------|
+| 3    | SERVIDORES     | 192.168.3.0/24     | 192.168.3.1   | Nao (statico) |
+| 5    | COLABORADORES  | 192.168.5.0/24     | 192.168.5.1   | Sim (.100+)   |
+| 8    | TI             | 192.168.8.0/24     | 192.168.8.1   | Sim (.100+)   |
+| 10   | IOT            | 192.168.10.0/24    | 192.168.10.1  | Sim (.100+)   |
+
+Hosts estaticos Matriz:
+- Servidor DNS/Matriz : 192.168.3.10
+- WIFI-MAT WAN        : 192.168.10.2  (GW 192.168.10.1, DNS 192.168.3.10)
+- WIFI-MAT LAN/WLAN   : 192.168.15.1/24, DHCP 192.168.15.100-149
+
+3.3 Rede Filial (atraves de RT-01 / SW-01)
+| VLAN | Nome           | Sub-rede           | Gateway       | DHCP          |
+|------|----------------|--------------------|---------------|---------------|
+| 1    | LAN_FILIAL     | 192.168.55.0/24    | 192.168.55.1  | Sim (.11+)    |
+| 10   | IOT_WIRELESS   | 192.168.56.0/24    | 192.168.56.1  | Sim (.11+)    |
+
+Hosts estaticos Filial:
+- WIFI-FIL WAN        : 192.168.56.2  (GW 192.168.56.1)
+- WIFI-FIL LAN/WLAN   : sugerido 192.168.57.1/24
+
+
+4. MAPA DE PORTAS
+--------------------------------------------------------------------------
+SW-02 (Matriz)
+  g0/1  trunk -> RT-02 g0/0   (allowed: 3,5,8,10)
+  g0/2  access VLAN 3  -> Servidor Matriz
+  f0/4  access VLAN 5  -> PC-04
+  f0/5  access VLAN 8  -> PC-05
+  f0/6  access VLAN 10 -> WIFI-MAT (porta WAN)
+
+SW-01 (Filial)
+  g0/1  trunk -> RT-01 g0/0   (allowed: 1,10)
+  f0/2  access VLAN 1  -> PC-02
+  f0/3  access VLAN 1  -> PC-03
+  f0/4  access VLAN 1  -> PC-01
+  f0/6  access VLAN 10 -> WIFI-FIL (porta WAN)
+
+
+5. ROTEAMENTO
+--------------------------------------------------------------------------
+RT-02 (Matriz):
+  - Default route: 0.0.0.0/0 -> 10.0.0.1 (RT-00)
+
+RT-01 (Filial):
+  - Default route: 0.0.0.0/0 -> 10.100.0.1 (RT-00)
+
+RT-00 (Borda):
+  - 192.168.3.0/24, 5.0/24, 8.0/24, 10.0/24, 15.0/24 -> 10.0.0.2 (RT-02)
+  - 192.168.55.0/24, 56.0/24, 57.0/24 -> 10.100.0.2 (RT-01)
+  - Default route: 0.0.0.0/0 -> 200.100.50.2 (Cloud/ISP)
+  - NAT overload: ACL 1 (redes internas) -> g0/0
+
+
+6. SEGURANCA / BOAS PRATICAS APLICADAS
+--------------------------------------------------------------------------
+- Trunks com "switchport trunk allowed vlan" explícito
+- Wi-Fi IoT: WPA2-Personal (AES), SSID REDE_IOT_MATRIZ
+- Portas de acesso com "spanning-tree portfast"
+- DHCP com faixas excluídas para gateways e hosts estáticos
+- NAT na borda para saída à Internet
+
+
+7. ARQUIVOS DO PROJETO
+--------------------------------------------------------------------------
+| Arquivo                                | Conteudo                          |
+|----------------------------------------|-----------------------------------|
+| Projeto-final-test1.pkt                | Topologia Packet Tracer           |
+| Documentacao Tecnica.txt               | Este documento                    |
+| Comandos de Diagnosticos e Validacao.txt | Comandos de teste/debug         |
+| codigo RT-00.txt                       | Config completa RT-00             |
+| codigo RT-01.txt                       | Config completa RT-01             |
+| codigo RT-02.txt                       | Config completa RT-02             |
+| codigo SW-01.txt                       | Config completa SW-01             |
+| codigo SW-02.txt                       | Config completa SW-02             |
+| codigo WIFI-IOT.txt                    | Config dos roteadores Wi-Fi       |
+| README.md                              | Guia rapido do repositorio        |
+
+
+8. COMO APLICAR AS CONFIGS NO PACKET TRACER
+--------------------------------------------------------------------------
+1. Abra Projeto-final-test1.pkt no Cisco Packet Tracer.
+2. Clique em cada equipamento > CLI.
+3. Cole o conteudo do arquivo .txt correspondente.
+4. Ajuste no .pkt, se preciso:
+   - IP do Cloud/ISP em RT-00 g0/0 (padrao: 200.100.50.2)
+   - IPs dos hosts conforme o plano acima
+5. Salve o .pkt e valide com os comandos de diagnóstico.

@@ -1,49 +1,66 @@
-! 1. Nome do switch
+! =========================================================
+! SW-01 — Switch da Filial
+! VLAN 1  : PCs locais (PC-01, PC-02, PC-03)
+! VLAN 10 : Roteador Wi-Fi IoT
+! Uplink  : trunk para RT-01 (Router-on-a-Stick)
+! =========================================================
+enable
+configure terminal
+
+! 1. Nome do comutador
 hostname SW-01
 
-! 2. Uplink conectado ao roteador RT-01
+! 2. Criacao das VLANs
+vlan 1
+ name LAN_FILIAL
+ exit
+
+vlan 10
+ name IOT_WIRELESS
+ exit
+
+! 3. Uplink para o roteador RT-01 (trunk 802.1Q)
 interface gigabitEthernet 0/1
- description UPLINK_RT-01
+ description UPLINK_TRUNK_RT-01
+ switchport mode trunk
+ switchport trunk allowed vlan 1,10
  no shutdown
  exit
 
-! 3. Portas dos computadores locais
-interface fastEthernet 0/4
- description CONEXAO_PC-01
- switchport mode access
- no shutdown
- exit
-
+! 4. Portas dos computadores locais (VLAN 1)
 interface fastEthernet 0/2
  description CONEXAO_PC-02
  switchport mode access
+ switchport access vlan 1
+ spanning-tree portfast
  no shutdown
  exit
 
 interface fastEthernet 0/3
  description CONEXAO_PC-03
  switchport mode access
+ switchport access vlan 1
+ spanning-tree portfast
  no shutdown
  exit
 
-end
-write memory
-
-
-
-! 1. Criar a VLAN 10 (IoT / Wireless)
-vlan 10
- name IOT_WIRELESS
- exit
-
-! 2. Garantir que a porta de uplink para o RT-01 seja tronco ou mantenha o trafego
-! No modelo direto da rede 192.168.55.0/24:
-interface fastEthernet 0/6
- description CONEXAO_WIRELESS_ROUTER_1
+interface fastEthernet 0/4
+ description CONEXAO_PC-01
  switchport mode access
  switchport access vlan 1
+ spanning-tree portfast
  no shutdown
  exit
 
+! 5. Roteador Wi-Fi IoT da Filial (VLAN 10)
+interface fastEthernet 0/6
+ description CONEXAO_WIRELESS_ROUTER_FILIAL
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+ no shutdown
+ exit
+
+! 6. Salvar configuracoes
 end
 write memory

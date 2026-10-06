@@ -1,0 +1,12 @@
+# Packet Tracer / OS
+*.pkt.bak
+*.pka
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*~
