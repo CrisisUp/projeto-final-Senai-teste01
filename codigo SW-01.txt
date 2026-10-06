@@ -1,0 +1,49 @@
+! 1. Nome do switch
+hostname SW-01
+
+! 2. Uplink conectado ao roteador RT-01
+interface gigabitEthernet 0/1
+ description UPLINK_RT-01
+ no shutdown
+ exit
+
+! 3. Portas dos computadores locais
+interface fastEthernet 0/4
+ description CONEXAO_PC-01
+ switchport mode access
+ no shutdown
+ exit
+
+interface fastEthernet 0/2
+ description CONEXAO_PC-02
+ switchport mode access
+ no shutdown
+ exit
+
+interface fastEthernet 0/3
+ description CONEXAO_PC-03
+ switchport mode access
+ no shutdown
+ exit
+
+end
+write memory
+
+
+
+! 1. Criar a VLAN 10 (IoT / Wireless)
+vlan 10
+ name IOT_WIRELESS
+ exit
+
+! 2. Garantir que a porta de uplink para o RT-01 seja tronco ou mantenha o trafego
+! No modelo direto da rede 192.168.55.0/24:
+interface fastEthernet 0/6
+ description CONEXAO_WIRELESS_ROUTER_1
+ switchport mode access
+ switchport access vlan 1
+ no shutdown
+ exit
+
+end
+write memory

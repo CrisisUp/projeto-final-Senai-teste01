@@ -1,0 +1,20 @@
+! =========================================================
+! DOCUMENTAÇÃO: ROTEADOR WI-FI IOT (WRT300N)
+! =========================================================
+! Interface WAN (Internet Setup):
+! - Connection Type: Static IP
+! - IP: 192.168.10.2
+! - Mask: 255.255.255.0
+! - Default Gateway: 192.168.10.1 (RT-02 Subinterface g0/0.10)
+! - DNS 1: 192.168.3.10 (Servidor Matriz)
+
+! Interface LAN / WLAN (Network Setup):
+! - Router IP: 192.168.15.1
+! - Subnet Mask: 255.255.255.0
+! - DHCP Server: Enabled
+! - Range DHCP: 192.168.15.100 - 192.168.15.149
+
+! Parâmetros de Rede Sem Fios (Wireless):
+! - SSID: REDE_IOT_MATRIZ
+! - Security: WPA2-Personal (AES)
+! - Passphrase: Senai@IoT2026

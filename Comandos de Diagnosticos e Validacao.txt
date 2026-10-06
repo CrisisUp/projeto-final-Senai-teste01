@@ -1,0 +1,69 @@
+show vlan brief (no switch): 
+Lista as VLANs ativas e quais portas físicas estão vinculadas a cada uma.
+
+show interfaces trunk (no switch): 
+Confirma o funcionamento da porta em modo tronco (802.1q) e as VLANs permitidas.
+
+show ip interface brief (no roteador): 
+Confirma se a interface física g0/0 e as subinterfaces (.3, .5, .8, .10) estão em estado up/up.
+
+ping  (no prompt dos computadores): 
+Testa a comunicação inter-VLAN validando o encaminhamento de pacotes pelo gateway.
+
+
+Quais outros comandos úteis para diagnóstico, validação ou debug?
+
+Para complementar a sua documentação técnica, aqui estão os comandos essenciais do Cisco IOS e dos hosts divididos por finalidade:
+
+1. Comutador (SW-02) — Diagnóstico de Camada 2
+show running-config: Exibe toda a configuração ativa na memória RAM do switch. Útil para revisar rapidamente portas, VLANs e trunks configurados.
+
+show interface  switchport (ex.: show interface gigabitEthernet 0/1 switchport): 
+Mostra o status detalhado de camada 2 da porta (se está em modo trunk ou access, qual a VLAN nativa e modo de encapsulamento).
+
+show mac address-table dynamic: 
+Lista apenas os endereços MAC aprendidos dinamicamente pelo switch em cada porta e VLAN, confirmando se os dispositivos estão trafegando dados.
+
+show spanning-tree: 
+Exibe o status do Spanning Tree Protocol (STP) por VLAN, mostrando quais portas estão em estado de encaminhamento (Forwarding) ou bloqueadas (Blocking) para evitar loops.
+
+show interfaces status: Tabela resumida com todas as portas do switch, indicando estado do link (connected/notconnect), duplex, velocidade e a VLAN à qual cada interface está associada.
+
+2. Roteador (RT-02) — Diagnóstico de Camada 3 e Roteamento
+show ip route: Exibe a tabela de roteamento do roteador. Mostra as redes diretamente conectadas (C), rotas locais (L) e rotas estáticas ou dinâmicas aprendidas.
+
+show ip arp: 
+Exibe a tabela ARP do roteador, associando os endereços IP de cada subinterface aos respectivos endereços físicos (MAC) dos computadores e servidores.
+
+show ip interface  (ex.: show ip interface gigabitEthernet 0/0.5): 
+Traz detalhes completos de camada 3 de uma interface/subinterface específica (MTU, status de broadcast, se há ACLs aplicadas).
+
+traceroute : 
+Rastreia salto a salto o caminho que o pacote percorre pela rede até alcançar o destino, fundamental para identificar em qual roteador a conexão está parando.
+
+3. Comandos de Debug em Tempo Real (Roteador/Switch)
+Atenção: Em ambientes de produção reais, execute o debug com filtros para não sobrecarregar a CPU. No Packet Tracer, seu uso é seguro para fins de aprendizado.
+
+debug ip icmp: 
+Mostra em tempo real no terminal os pacotes de ping (echo request e echo reply) chegando e saindo do roteador, facilitando ver se a máquina de origem enviou o pacote e se o destino respondeu.
+
+debug ip packet: 
+Exibe os cabeçalhos de todos os pacotes IP que passam pelo roteador (origem, destino e protocolo).
+
+undebug all (ou abreviado un all): 
+Comando obrigatório após usar qualquer comando de debug; desativa todos os monitoramentos ativos no terminal.
+
+4. Dispositivos Finais (PCs e Servidores)
+arp -a: 
+Executado no Command Prompt do computador. Exibe os IPs e endereços MAC resolvidos recentemente na mesma sub-rede (ou o MAC do próprio Gateway).
+
+tracert : 
+Equivalente ao traceroute no Windows/Packet Tracer PC. Útil para verificar se o computador consegue alcançar o gateway e saltar para os próximos roteadores.
+
+netstat -r: 
+Mostra a tabela de rotas do próprio computador, permitindo verificar qual é a rota padrão (Default Gateway) ativa na máquina.
+
+
+
+RT-02#show running-config
+SW-02#show running-config

@@ -1,0 +1,66 @@
+enable
+configure terminal
+
+! 1. Definir o nome do comutador
+hostname SW-02
+
+! 2. Criacao das VLANs
+vlan 3
+ name SERVIDORES
+ exit
+
+vlan 5
+ name COLABORADORES
+ exit
+
+vlan 8
+ name TI
+ exit
+
+vlan 10
+ name IOT
+ exit
+
+! 3. Atribuicao e descricao das portas de acesso
+! Servidor Matriz (VLAN 3)
+interface gigabitEthernet 0/2
+ description CONEXAO_SERVIDOR_MATRIZ
+ switchport mode access
+ switchport access vlan 3
+ no shutdown
+ exit
+
+! PC-04 (VLAN 5 - Colaboradores)
+interface fastEthernet 0/4
+ description CONEXAO_PC04_COLABORADORES
+ switchport mode access
+ switchport access vlan 5
+ no shutdown
+ exit
+
+! PC-05 (VLAN 8 - TI)
+interface fastEthernet 0/5
+ description CONEXAO_PC05_TI
+ switchport mode access
+ switchport access vlan 8
+ no shutdown
+ exit
+
+! Roteador Wi-Fi IoT (VLAN 10 - IoT)
+interface fastEthernet 0/6
+ description LINK_ROTEADOR_WIFI_IOT
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+ exit
+
+! 4. Configuracao da porta Trunk (conexao com RT-02)
+interface gigabitEthernet 0/1
+ description UPLINK_TRUNK_RT-02
+ switchport mode trunk
+ no shutdown
+ exit
+
+! 5. Salvar configuracoes
+end
+write memory

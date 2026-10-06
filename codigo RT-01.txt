@@ -1,0 +1,33 @@
+! 1. Definir o nome do equipamento
+hostname RT-01
+
+! 2. Ativar a interface WAN conectada ao RT-00
+interface gigabitEthernet 0/1
+ description LINK_WAN_RT-00
+ ip address 10.100.0.2 255.255.255.252
+ duplex auto
+ speed auto
+ no shutdown
+ exit
+
+! 3. Rota padrao de saida da Filial apontando para a borda (RT-00)
+ip route 0.0.0.0 0.0.0.0 10.100.0.1
+
+! 4. Salvar configuracoes
+end
+write memory
+
+
+
+configure terminal
+
+interface gigabitEthernet 0/0
+ description LAN_FILIAL_SW-01
+ ip address 192.168.55.1 255.255.255.0
+ duplex auto
+ speed auto
+ no shutdown
+ exit
+
+end
+write memory
