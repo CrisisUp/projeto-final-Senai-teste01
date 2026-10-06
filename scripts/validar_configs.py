@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# Plano de referencia (espelha Documentacao Tecnica.txt / README.md)
+# Plano de referencia (espelha Documentacao Tecnica.md / README.md)
 # ---------------------------------------------------------------------------
 DNS_CORPORATIVO = "192.168.3.10"
 
@@ -30,7 +30,7 @@ ARQUIVOS = {
     "SW-01": "codigo SW-01.txt",
     "SW-02": "codigo SW-02.txt",
     "WIFI": "codigo WIFI-IOT.txt",
-    "DOC": "Documentacao Tecnica.txt",
+    "DOC": "Documentacao Tecnica.md",
     "DIAG": "Comandos de Diagnosticos e Validacao.txt",
     "README": "README.md",
 }

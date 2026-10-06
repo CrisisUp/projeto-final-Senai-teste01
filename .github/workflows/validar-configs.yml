@@ -1,0 +1,21 @@
+name: Validar configs SENAI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validar-configs:
+    name: Validar configs × IP plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Rodar scripts/validar_configs.py
+        run: python scripts/validar_configs.py

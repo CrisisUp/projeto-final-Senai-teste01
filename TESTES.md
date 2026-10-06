@@ -14,6 +14,8 @@ python scripts/validar_configs.py
 
 Exit code `0` = configs consistentes. Exit code `1` = há falhas.
 
+O GitHub Actions (`.github/workflows/validar-configs.yml`) executa o mesmo script em **cada push e pull request**. O job deve ficar **verde** antes de entregar o projeto.
+
 ---
 
 ## Credenciais do lab
@@ -203,6 +205,7 @@ Anexe ao relatório (mínimo):
 
 ```text
 Arquivo configs (.txt)  →  python scripts/validar_configs.py   [automático]
+Push / PR no GitHub     →  Actions validar-configs             [CI]
 Topologia .pkt + CLI    →  testes M01–M28                      [manual PT]
 Internet / NAT          →  M11, M21, M23–M24, M29–M31          [depende do Cloud]
 Entrega acadêmica       →  seção 3 (prints)
@@ -235,5 +238,7 @@ O script falha se alguém reintroduzir problemas já corrigidos, por exemplo:
 |---|---|
 | Script lê só `.txt`/`.md`, não o `.pkt` | Topologia real do PT precisa de teste manual |
 | Cloud/ISP pode não existir no `.pkt` | Testes de Internet podem falhar sem ser bug de config |
-| Packet Tracer não roda CI nativo | Validação “de lab” é humana |
+| Packet Tracer não roda CI nativo | Validação “de lab” é humana (CI cobre só os `.txt`/`.md`) |
 | Passphrase Wi-Fi em texto no repo | Aceitável em aula; não usar em produção real |
+
+Decisões de design e limites completos: ver `README.md` e `Documentacao Tecnica.md` (seções 8 e 9).

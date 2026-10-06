@@ -74,7 +74,7 @@ enable
 | Arquivo | Descrição |
 | --- | --- |
 | `Projeto-final-test1.pkt` | Topologia Packet Tracer |
-| `Documentacao Tecnica.txt` | Documentação técnica completa (IP plan + hosts) |
+| `Documentacao Tecnica.md` | Documentação técnica completa (IP plan + hosts + design) |
 | `Comandos de Diagnosticos e Validacao.txt` | Comandos de diagnóstico/teste |
 | `codigo RT-00.txt` | Roteador de borda (rotas + NAT + Internet) |
 | `codigo RT-01.txt` | Roteador da Filial (on-a-stick + DHCP) |
@@ -84,6 +84,7 @@ enable
 | `codigo WIFI-IOT.txt` | Config dos roteadores Wi-Fi (GUI) |
 | `TESTES.md` | Matriz de testes (automáticos + Packet Tracer) |
 | `scripts/validar_configs.py` | Valida configs .txt × IP plan |
+| `.github/workflows/validar-configs.yml` | CI: valida configs no push/PR |
 
 ## Como usar no Packet Tracer
 
@@ -105,6 +106,8 @@ python scripts/validar_configs.py
 ```
 
 O script confere se os `codigo *.txt`, a documentação e o README batem com o IP plan (DNS corporativo, gateways, trunks, rotas, NAT, SSIDs). Exit code `0` = OK.
+
+**CI no GitHub:** o workflow [`.github/workflows/validar-configs.yml`](.github/workflows/validar-configs.yml) roda o mesmo script em cada push e pull request. Se a validação falhar, o push aparece com o job em vermelho — corrija antes de entregar.
 
 ### Manual (Packet Tracer)
 
@@ -142,6 +145,44 @@ PC> ipconfig /all   (DNS deve ser 192.168.3.10)
 
 Credenciais do lab (enable, SSH e Wi-Fi): ver seção **[Credenciais do lab](#credenciais-do-lab)**.
 
+## Decisões de design
+
+| Decisão | Por quê |
+|---|---|
+| **Router-on-a-Stick** (RT-01 e RT-02) | Uma interface física com subinterfaces 802.1Q centraliza as VLANs no roteador; evita um roteador por VLAN e mantém o lab enxuto. |
+| **Rotas estáticas** (não OSPF) | Topologia pequena e estável (2 sedes + borda). Estáticas são previsíveis, fáceis de auditar no `show ip route` e adequadas ao escopo SENAI. |
+| **WAN `/30`** | Ponto a ponto clássico: 2 hosts + rede + broadcast; sobra de endereços é zero. |
+| **IoT em VLAN própria (10)** | Segmenta dispositivos de baixa confiança do restante da rede corporativa. |
+| **ACLs IoT/Colab → negam TI** | Limita movimento lateral: IoT e colaboradores não precisam alcançar hosts de gestão/TI; só DNS/servidor e gateway. |
+| **VLAN 1 na filial (PCs)** | Mantém o cenário simples para a atividade; IoT filial já está separada na VLAN 10. |
+| **DHCP a partir de `.21`** | Reserva `.1`–`.20` para gateways e hosts estáticos (servidor `192.168.3.10`, Wi-Fi WAN `.2`, etc.). |
+| **DNS corporativo único `192.168.3.10`** | Padroniza resolução em Matriz e Filial; facilita diagnóstico e entrega. |
+| **NAT overload só na borda (RT-00)** | Ponto único de saída à Internet; interno usa IP privado. |
+| **Wi-Fi com IP WAN estático** | Evita dependência de DHCP corporativo no lado IoT e torna o teste determinístico. |
+| **Hardening básico (SSH, secret, port security, DHCP snooping)** | Boas práticas de lab que também valem como resposta em entrevista, sem complexificar o `.pkt`. |
+| **Validação por script nos `.txt`** | O `.pkt` é binário e opaco no git; o script protege o IP plan e as correções feitas nas configs em texto. |
+
+## Limites do cenário
+
+Este é um **projeto acadêmico em Packet Tracer**, não uma rede de produção. O que **não** está implementado (de forma consciente):
+
+| Limite | Situação |
+|---|---|
+| Protocolo dinâmico (OSPF/EIGRP) | Só rotas estáticas |
+| Redundância (HSRP/VRRP, link backup) | Single path em tudo |
+| Firewall stateful / zone-based | ACLs extended simples no IOS |
+| AAA corporativo (TACACS/RADIUS) | Usuário local `admin` |
+| IPv6 | Somente IPv4 |
+| QoS / L3 policement | Não configurado |
+| Monitoramento (SNMP/syslog server) | Fora do escopo do `.pkt` |
+| Backup automatizado de configs | Manual (CLI / write memory) |
+| Cloud/ISP real | Depende de dispositivo no `.pkt` com gateway `200.100.50.2` |
+| ACLs em todas as VLANs | VLAN TI e VLAN 1 filial sem ACL de saída (uso geral/admin) |
+| Teste automatizado do `.pkt` | Só validamos arquivos de config `.txt` |
+| Senhas de produção | Credenciais são de **lab SENAI** (ver seção de credenciais) |
+
+**Como o projeto deve ser lido:** topologia coerente, IP plan documentado, segmentação IoT + hardening + testes. Escalar para OSPF, HA ou firewall stateful seria um próximo nível (GNS3/EVE-NG/PyATS), não o escopo atual.
+
 ## O que foi corrigido / completado
 
 - Documentação corrigida (arquivos de doc com o conteúdo certo)
@@ -157,3 +198,5 @@ Credenciais do lab (enable, SSH e Wi-Fi): ver seção **[Credenciais do lab](#cr
 - SSIDs `REDE_IOT_MATRIZ` e `REDE_IOT_FILIAL` na doc e nos testes
 - `TESTES.md` + `scripts/validar_configs.py` (validação automática das configs)
 - `README.md`, `codigo WIFI-IOT.txt` e `.gitignore`
+- Documentação em Markdown (`Documentacao Tecnica.md`)
+- CI no GitHub Actions: `scripts/validar_configs.py` em cada push/PR
