@@ -54,12 +54,15 @@ show ip route
 show ip arp
   Tabela ARP: IP <-> MAC dos vizinhos e hosts.
 
-show ip interfaces
-  Ex.: show ip interfaces gigabitEthernet 0/0.5
+show ip interface
+  Ex.: show ip interface gigabitEthernet 0/0.5
   Detalhes L3 de interface/subinterface (MTU, broadcast, ACLs).
 
 show ip dhcp binding
   Clientes DHCP atualmente vinculados (quando ha pools configurados).
+
+show ip dhcp pool
+  Resumo dos pools DHCP (rede, gateway, DNS, leases).
 
 show ip nat translations
   Traducoes NAT ativas (importante validar no RT-00).
@@ -101,6 +104,7 @@ netstat -r
 
 ipconfig /all
   IP, mascara, gateway, DNS e se o endereco veio de DHCP ou estatico.
+  Confira se o DNS veio como 192.168.3.10 (padrao corporativo).
 
 nslookup
   Testa resolucao DNS (ex.: nslookup servidor-matriz.local).
@@ -117,19 +121,29 @@ B) Matriz interna (VLAN 5 -> VLAN 8)
    PC-04 -> ping 192.168.8.1 (gateway TI) e host da VLAN 8
    Esperado: sucesso via SW-02 -> RT-02 (subinterfaces).
 
-C) Acesso a Internet
+C) Acesso a Internet (requer Cloud/ISP no .pkt)
    PC qualquer -> ping 8.8.8.8 e tracert ate a borda
    Esperado: sai por RT-00 g0/0 com NAT (show ip nat translations).
 
-D) Wi-Fi IoT
+D) Wi-Fi IoT — Matriz
    Device na SSID REDE_IOT_MATRIZ
    - Obtem IP 192.168.15.1xx (DHCP do WRT300N)
    - ping 192.168.15.1 (gateway WLAN)
    - ping 192.168.3.10 (DNS/servidor via WAN do roteador Wi-Fi)
 
-E) Validacao de trunk
+E) Wi-Fi IoT — Filial
+   Device na SSID REDE_IOT_FILIAL
+   - Obtem IP 192.168.57.1xx (DHCP do WRT300N)
+   - ping 192.168.57.1 (gateway WLAN)
+   - ping 192.168.3.10 (DNS/servidor via WAN)
+
+F) Validacao de trunk
    SW-01/SW-02: show interfaces trunk
    Esperado: modo trunk, VLANs permitidas exatamente as configuradas.
+
+G) Validacao de DHCP
+   PC da Matriz/Filial: ipconfig /all
+   Esperado: IP a partir de .21, GW local, DNS 192.168.3.10
 
 
 7. CAPTURAS PARA A DOCUMENTACAO
@@ -141,4 +155,6 @@ Anexe ao relatorio:
   - SW-02#show interfaces trunk
   - RT-00#show ip route
   - RT-00#show ip nat translations
+  - RT-01#show ip dhcp pool
   - Saida de ping e tracert entre Filial e Matriz
+  - ipconfig /all de um PC (confirmando DNS 192.168.3.10)

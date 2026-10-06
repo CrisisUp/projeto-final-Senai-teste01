@@ -43,13 +43,14 @@ interface gigabitEthernet 0/1
 ip route 0.0.0.0 0.0.0.0 10.100.0.1
 
 ! 6. DHCP — VLAN 1 (PCs da Filial)
-ip dhcp excluded-address 192.168.55.1 192.168.55.10
-ip dhcp excluded-address 192.168.56.1 192.168.56.10
+!    DNS corporativo: servidor Matriz 192.168.3.10 (igual a todo o restante)
+ip dhcp excluded-address 192.168.55.1 192.168.55.20
+ip dhcp excluded-address 192.168.56.1 192.168.56.20
 
 ip dhcp pool DHCP_FILIAL_VLAN1
  network 192.168.55.0 255.255.255.0
  default-router 192.168.55.1
- dns-server 8.8.8.8 8.8.4.4
+ dns-server 192.168.3.10
  domain-name filial.local
  lease 0 8 0
 

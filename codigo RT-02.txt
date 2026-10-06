@@ -57,13 +57,14 @@ interface gigabitEthernet 0/1
 ip route 0.0.0.0 0.0.0.0 10.0.0.1
 
 ! 6. Excecoes DHCP (gateways e IPs estaticos conhecidos)
+!    Faixa efetiva de DHCP: .21 - .254 em cada VLAN
 ip dhcp excluded-address 192.168.3.1 192.168.3.20
 ip dhcp excluded-address 192.168.5.1 192.168.5.20
 ip dhcp excluded-address 192.168.8.1 192.168.8.20
 ip dhcp excluded-address 192.168.10.1 192.168.10.20
 
 ! 7. DHCP — VLAN 5 (Colaboradores)
-!    Servidor Matriz fica estatico em 192.168.3.10
+!    Servidor Matriz fica estatico em 192.168.3.10 (fora de pool)
 ip dhcp pool DHCP_MATRIZ_VLAN5
  network 192.168.5.0 255.255.255.0
  default-router 192.168.5.1

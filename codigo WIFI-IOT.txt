@@ -40,7 +40,7 @@ Interface LAN / WLAN (Network Setup):
   Subnet Mask     : 255.255.255.0
   DHCP Server     : Enabled
   Start IP        : 192.168.57.100
-  Max Users       : 50
+  Max Users       : 50   (faixa efetiva ate .149)
 
 Wireless:
   SSID            : REDE_IOT_FILIAL
@@ -54,3 +54,4 @@ Wireless:
 - DNS sempre apontando para o servidor da Matriz (192.168.3.10).
 - LAN/WLAN em sub-redes proprias (15.0/24 e 57.0/24), isoladas das VLANs.
 - No .pkt, conecte a porta WAN do WRT300N a VLAN 10 do switch correspondente.
+- Config oficial (nao "sugerida"): WLAN filial = 192.168.57.1/24.

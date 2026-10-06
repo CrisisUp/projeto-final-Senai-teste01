@@ -33,6 +33,7 @@ interface fastEthernet 0/2
  switchport mode access
  switchport access vlan 1
  spanning-tree portfast
+ spanning-tree bpduguard enable
  no shutdown
  exit
 
@@ -41,6 +42,7 @@ interface fastEthernet 0/3
  switchport mode access
  switchport access vlan 1
  spanning-tree portfast
+ spanning-tree bpduguard enable
  no shutdown
  exit
 
@@ -49,6 +51,7 @@ interface fastEthernet 0/4
  switchport mode access
  switchport access vlan 1
  spanning-tree portfast
+ spanning-tree bpduguard enable
  no shutdown
  exit
 
@@ -58,6 +61,7 @@ interface fastEthernet 0/6
  switchport mode access
  switchport access vlan 10
  spanning-tree portfast
+ spanning-tree bpduguard enable
  no shutdown
  exit
 
