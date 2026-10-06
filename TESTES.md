@@ -16,6 +16,30 @@ Exit code `0` = configs consistentes. Exit code `1` = há falhas.
 
 ---
 
+## Credenciais do lab
+
+> Somente Packet Tracer / aula SENAI. Não usar em produção.
+
+| Onde | Usuário / modo | Senha |
+| --- | --- | --- |
+| Enable (RT-00/01/02, SW-01/02) | `enable` | `Senai@Enable2026` |
+| Login SSH / console | `admin` | `Senai@Admin2026` |
+| Wi-Fi `REDE_IOT_MATRIZ` | WPA2-Personal | `Senai@IoT2026` |
+| Wi-Fi `REDE_IOT_FILIAL` | WPA2-Personal | `Senai@IoT2026` |
+
+Exemplo:
+
+```text
+ssh admin@<IP>
+# Senai@Admin2026
+enable
+# Senai@Enable2026
+```
+
+O script de validação confere se `enable secret Senai@Enable2026` e `username admin ... Senai@Admin2026` estão nos `codigo *.txt` (hardening).
+
+---
+
 ## 1. Testes automatizados (arquivos do repositório)
 
 Script: `scripts/validar_configs.py`  
@@ -36,6 +60,7 @@ Não precisa abrir o Packet Tracer. Checa se os `codigo *.txt`, doc e README bat
 | A11 | ACLs RT-02 | ACL_IOT_IN / ACL_COLAB_IN + `ip access-group` nas subifs |
 | A12 | ACL RT-01 | ACL_FILIAL_IOT_IN na VLAN 10 |
 | A13 | L2 | port security, DHCP snooping, portas ociosas nos switches |
+| A14 | Credenciais | `enable secret Senai@Enable2026` e `username admin` / `Senai@Admin2026` nas configs IOS |
 
 **Como rodar**
 
@@ -123,6 +148,7 @@ Abra `Projeto-final-test1.pkt`, cole as configs dos `codigo *.txt`, configure ho
 | M32 | Qualquer IOS | `show run | include enable secret` | `enable secret` presente (não `enable password`) |
 | M33 | Qualquer IOS | `show run | include banner` | banner MOTD com texto SENAI |
 | M34 | Qualquer IOS | `show ip ssh` / tentar SSH | SSH ativo; Telnet recusado (`transport input ssh`) |
+| M34b | Qualquer IOS | SSH `admin` + `enable` | Login OK com `Senai@Admin2026` / enable `Senai@Enable2026` |
 | M35 | RT-02 | `show access-lists` | ACL_IOT_IN e ACL_COLAB_IN com contadores |
 | M36 | RT-02 | `show ip interface g0/0.10` | `ip access-group ACL_IOT_IN in` |
 | M37 | RT-02 | `show ip interface g0/0.5` | `ip access-group ACL_COLAB_IN in` |

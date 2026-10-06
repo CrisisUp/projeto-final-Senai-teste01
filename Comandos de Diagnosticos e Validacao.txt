@@ -164,6 +164,9 @@ H) Validacao de ACLs e hardening
      Esperado: SUCESSO (ACL permite)
    SSH admin@<IP do roteador>
      Esperado: login local com secret; Telnet recusado
+     Senhas do lab (ver README.md / TESTES.md):
+       - login: admin / Senai@Admin2026
+       - enable: Senai@Enable2026
 
 
 7. CAPTURAS PARA A DOCUMENTACAO

@@ -139,6 +139,21 @@ HARDENING = [
     "username admin",
 ]
 
+# Credenciais do lab — devem aparecer nas configs IOS (ver README / TESTES.md)
+CREDENCIAIS_LAB = [
+    "enable secret Senai@Enable2026",
+    "username admin privilege 15 secret Senai@Admin2026",
+]
+SENHA_WIFI_LAB = "Senai@IoT2026"
+
+# No README/TESTES as credenciais sao documentadas em forma legivel
+# (tabela), nao como linha de config IOS completa.
+CREDENCIAIS_README = [
+    "Senai@Enable2026",
+    "Senai@Admin2026",
+    SENHA_WIFI_LAB,
+]
+
 
 def validar_hardening(texto: str, nome: str, res: Resultado) -> None:
     for item in HARDENING:
@@ -146,6 +161,12 @@ def validar_hardening(texto: str, nome: str, res: Resultado) -> None:
             res.passou(f"{nome}: hardening contem '{item}'")
         else:
             res.falhou(f"{nome}: hardening falta '{item}'")
+
+    for cred in CREDENCIAIS_LAB:
+        if tem(texto, cred):
+            res.passou(f"{nome}: credencial lab presente ({cred.split()[-1]})")
+        else:
+            res.falhou(f"{nome}: falta credencial lab '{cred}'")
 
 
 def validar_rt01(texto: str, res: Resultado) -> None:
@@ -352,6 +373,7 @@ def validar_wifi(texto: str, res: Resultado) -> None:
         "REDE_IOT_FILIAL",
         DNS_CORPORATIVO,
         "WPA2-Personal",
+        SENHA_WIFI_LAB,
     ]
     for item in obrigatorios:
         if tem(texto, item):
@@ -384,6 +406,18 @@ def validar_doc_e_readme(doc: str, readme: str, diag: str, res: Resultado) -> No
                     f"{rotulo}: contem '{host}' (ok se for exemplo de ping Internet, "
                     f"nao como DNS corporativo)"
                 )
+
+    # Credenciais do lab documentadas no README (valores legiveis)
+    for cred in CREDENCIAIS_README:
+        if cred in readme:
+            res.passou(f"README: credencial documentada ({cred})")
+        else:
+            res.falhou(f"README: falta documentar credencial '{cred}'")
+
+    if "admin" in readme and "Credenciais" in readme:
+        res.passou("README: usuario 'admin' documentado na secao de credenciais")
+    else:
+        res.avisos.append("README: confira se o usuario 'admin' aparece em Credenciais do lab")
 
     # comando de diagnostico: singular
     if "show ip interface" in diag and "show ip interfaces" not in diag:
