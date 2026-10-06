@@ -145,6 +145,26 @@ G) Validacao de DHCP
    PC da Matriz/Filial: ipconfig /all
    Esperado: IP a partir de .21, GW local, DNS 192.168.3.10
 
+H) Validacao de ACLs e hardening
+   RT-02# show access-lists
+     ACL_IOT_IN e ACL_COLAB_IN presentes; contadores incrementam nos testes
+   RT-02# show ip interface gigabitEthernet 0/0.10
+     Linha: ip access-group ACL_IOT_IN in
+   RT-01# show ip interface gigabitEthernet 0/0.10
+     Linha: ip access-group ACL_FILIAL_IOT_IN in
+   SW-02# show port-security
+     Portas access com violation shutdown / sticky
+   SW-02# show ip dhcp snooping
+     Snooping ativo; g0/1 em trust
+   Qualquer IOS: show run | include enable secret | banner | transport input
+     Hardening presente (secret, banner, SSH)
+   Ping IoT -> 192.168.8.1 (host TI)
+     Esperado: FALHA (ACL nega)
+   Ping IoT -> 192.168.3.10 (servidor)
+     Esperado: SUCESSO (ACL permite)
+   SSH admin@<IP do roteador>
+     Esperado: login local com secret; Telnet recusado
+
 
 7. CAPTURAS PARA A DOCUMENTACAO
 --------------------------------------------------------------------------
@@ -156,5 +176,9 @@ Anexe ao relatorio:
   - RT-00#show ip route
   - RT-00#show ip nat translations
   - RT-01#show ip dhcp pool
+  - RT-02#show access-lists
+  - RT-02#show ip interface g0/0.10
+  - SW-02#show port-security
   - Saida de ping e tracert entre Filial e Matriz
   - ipconfig /all de um PC (confirmando DNS 192.168.3.10)
+  - Ping IoT -> TI (falha) e IoT -> servidor (sucesso)

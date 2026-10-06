@@ -32,6 +32,10 @@ Não precisa abrir o Packet Tracer. Checa se os `codigo *.txt`, doc e README bat
 | A07 | WIFI-IOT | IPs MAT/FIL, SSIDs, DNS corporativo |
 | A08 | Doc/README | Gateways, DNS, SSIDs, Cloud 200.100.50.2 |
 | A09 | Diagnóstico | `show ip interface` (singular) e cenário REDE_IOT_FILIAL |
+| A10 | Hardening | enable secret, banner, SSH, no http server nos equipamentos |
+| A11 | ACLs RT-02 | ACL_IOT_IN / ACL_COLAB_IN + `ip access-group` nas subifs |
+| A12 | ACL RT-01 | ACL_FILIAL_IOT_IN na VLAN 10 |
+| A13 | L2 | port security, DHCP snooping, portas ociosas nos switches |
 
 **Como rodar**
 
@@ -112,13 +116,35 @@ Abra `Projeto-final-test1.pkt`, cole as configs dos `codigo *.txt`, configure ho
 | M27 | Device Wi-Fi Matriz | DHCP + ping | IP 192.168.15.1xx; ping 192.168.15.1 e 192.168.3.10 |
 | M28 | Device Wi-Fi Filial | DHCP + ping | IP 192.168.57.1xx; ping 192.168.57.1 e 192.168.3.10 |
 
-### 2.7 Cloud / Internet (opcional no .pkt)
+### 2.7 Hardening e ACLs
+
+| ID | Equipamento | Ação | Critério de aceite |
+|---|---|---|---|
+| M32 | Qualquer IOS | `show run | include enable secret` | `enable secret` presente (não `enable password`) |
+| M33 | Qualquer IOS | `show run | include banner` | banner MOTD com texto SENAI |
+| M34 | Qualquer IOS | `show ip ssh` / tentar SSH | SSH ativo; Telnet recusado (`transport input ssh`) |
+| M35 | RT-02 | `show access-lists` | ACL_IOT_IN e ACL_COLAB_IN com contadores |
+| M36 | RT-02 | `show ip interface g0/0.10` | `ip access-group ACL_IOT_IN in` |
+| M37 | RT-02 | `show ip interface g0/0.5` | `ip access-group ACL_COLAB_IN in` |
+| M38 | RT-01 | `show ip interface g0/0.10` | `ip access-group ACL_FILIAL_IOT_IN in` |
+| M39 | IoT → TI | PC IoT ping 192.168.8.1 | **Falha** (negado pela ACL) |
+| M40 | IoT → servidor | PC IoT ping 192.168.3.10 | **Sucesso** (permitido) |
+| M41 | Colab → TI | PC-04 ping host TI (não o GW se preferir) | **Falha** em host TI; GW pode responder se for gateway |
+| M42 | Colab → servidor | PC-04 ping 192.168.3.10 | **Sucesso** |
+| M43 | SW-01/SW-02 | `show port-security` | Portas access com sticky / maximum 1 |
+| M44 | SW-01/SW-02 | `show ip dhcp snooping` | Snooping ativo; trunk em trust |
+| M45 | SW | `show ip dhcp snooping binding` | (opcional) bindings após DHCP |
+| M46 | Portas ociosas | `show ip interface brief` | f0/7-24 administrativamente down |
+
+> Nota ACL: negar **hosts** da TI, não apenas a gateway — o gateway da VLAN TI (`192.168.8.1`) pode continuar respondendo a ICMP dependendo da ordem/escopo da ACL. O teste crítico é host real da VLAN 8 (ou outro IP de host TI) vs host IoT/Colab.
+
+### 2.8 Cloud / Internet (opcional no .pkt)
 
 | ID | Ação | Critério |
 |---|---|---|
-| M29 | Conferir Cloud no .pkt | Existe ISP com gateway `200.100.50.2` em RT-00 g0/0 |
-| M30 | Se não existir | Criar Cloud, igualar IP e repetir M11–M12, M21, M23–M24 |
-| M31 | Sem Cloud | Cenários Matriz↔Filial (M17–M20) **continuam válidos** |
+| M47 | Conferir Cloud no .pkt | Existe ISP com gateway `200.100.50.2` em RT-00 g0/0 |
+| M48 | Se não existir | Criar Cloud, igualar IP e repetir M11–M12, M21, M23–M24 |
+| M49 | Sem Cloud | Cenários Matriz↔Filial (M17–M20) **continuam válidos** |
 
 ---
 
@@ -133,12 +159,17 @@ Anexe ao relatório (mínimo):
 - [ ] `RT-00#show ip route`
 - [ ] `RT-00#show ip nat translations` (se houver Cloud)
 - [ ] `RT-01#show ip dhcp pool`
+- [ ] `RT-02#show access-lists`
+- [ ] `RT-02#show ip interface g0/0.10` (ACL_IOT_IN)
+- [ ] `SW-02#show port-security`
 - [ ] `ipconfig /all` de um PC da Matriz (DNS `192.168.3.10`)
 - [ ] `ipconfig /all` de um PC da Filial (DNS `192.168.3.10`)
 - [ ] Ping Filial → Matriz (`192.168.3.10`)
-- [ ] Ping inter-VLAN na Matriz (ex.: `192.168.8.1`)
+- [ ] Ping inter-VLAN na Matriz (ex.: `192.168.8.1` para Colab→GW TI)
+- [ ] Ping IoT → TI (**deve falhar**) e IoT → servidor (**deve funcionar**)
 - [ ] (Opcional) Ping Internet + `show ip nat translations`
 - [ ] (Opcional) Teste Wi-Fi SSID `REDE_IOT_MATRIZ` e `REDE_IOT_FILIAL`
+- [ ] (Opcional) SSH para o equipamento (usuário `admin`)
 
 ---
 

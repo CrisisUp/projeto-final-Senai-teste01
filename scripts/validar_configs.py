@@ -127,6 +127,26 @@ def validar_rt00(texto: str, res: Resultado) -> None:
         else:
             res.falhou(f"{nome}: falta '{ip}'")
 
+    validar_hardening(texto, nome, res)
+
+
+HARDENING = [
+    "enable secret",
+    "service password-encryption",
+    "banner motd",
+    "no ip http server",
+    "transport input ssh",
+    "username admin",
+]
+
+
+def validar_hardening(texto: str, nome: str, res: Resultado) -> None:
+    for item in HARDENING:
+        if tem(texto, item):
+            res.passou(f"{nome}: hardening contem '{item}'")
+        else:
+            res.falhou(f"{nome}: hardening falta '{item}'")
+
 
 def validar_rt01(texto: str, res: Resultado) -> None:
     nome = "RT-01"
@@ -143,6 +163,9 @@ def validar_rt01(texto: str, res: Resultado) -> None:
         "network 192.168.56.0 255.255.255.0",
         "default-router 192.168.55.1",
         "default-router 192.168.56.1",
+        # ACL IoT filial
+        "ip access-list extended ACL_FILIAL_IOT_IN",
+        "ip access-group ACL_FILIAL_IOT_IN in",
     ]
     for item in obrigatorios:
         if tem(texto, item):
@@ -150,13 +173,14 @@ def validar_rt01(texto: str, res: Resultado) -> None:
         else:
             res.falhou(f"{nome}: falta '{item}'")
 
+    validar_hardening(texto, nome, res)
+
     for host in HOSTS_PROIBIDOS:
         if host in texto:
             res.falhou(f"{nome}: DNS proibido '{host}' presente (deve ser {DNS_CORPORATIVO})")
         else:
             res.passou(f"{nome}: sem DNS publico '{host}'")
 
-    # pelo menos um dns-server deve ser o corporativo
     dns_encontrados = re.findall(r"dns-server\s+(\S+)", texto)
     if not dns_encontrados:
         res.falhou(f"{nome}: nenhum 'dns-server' configurado")
@@ -193,12 +217,22 @@ def validar_rt02(texto: str, res: Resultado) -> None:
         "default-router 192.168.8.1",
         "default-router 192.168.10.1",
         f"dns-server {DNS_CORPORATIVO}",
+        # ACLs inter-VLAN
+        "ip access-list extended ACL_IOT_IN",
+        "ip access-list extended ACL_COLAB_IN",
+        "ip access-group ACL_IOT_IN in",
+        "ip access-group ACL_COLAB_IN in",
+        # politica: IoT/Colab nao acessam TI
+        "deny   ip 192.168.10.0 0.0.0.255 192.168.8.0 0.0.0.255",
+        "deny   ip 192.168.5.0 0.0.0.255 192.168.8.0 0.0.0.255",
     ]
     for item in obrigatorios:
         if tem(texto, item):
             res.passou(f"{nome}: contem '{item}'")
         else:
             res.falhou(f"{nome}: falta '{item}'")
+
+    validar_hardening(texto, nome, res)
 
     pools = extrair_pools(texto)
     if len(pools) < 3:
@@ -223,6 +257,13 @@ def validar_sw01(texto: str, res: Resultado) -> None:
         "switchport access vlan 1",
         "switchport access vlan 10",
         "spanning-tree bpduguard enable",
+        "switchport port-security",
+        "switchport port-security violation shutdown",
+        "switchport port-security mac-address sticky",
+        "ip dhcp snooping",
+        "ip dhcp snooping trust",
+        "interface range fastEthernet 0/7 - 24",
+        "shutdown",
     ]
     for item in obrigatorios:
         if tem(texto, item):
@@ -230,8 +271,8 @@ def validar_sw01(texto: str, res: Resultado) -> None:
         else:
             res.falhou(f"{nome}: falta '{item}'")
 
-    # porta Wi-Fi deve estar na VLAN 10
-    # extrai bloco da interface f0/6
+    validar_hardening(texto, nome, res)
+
     m = re.search(
         r"interface fastEthernet 0/6\b(.*?)(?:\ninterface |\Z)",
         texto,
@@ -266,12 +307,21 @@ def validar_sw02(texto: str, res: Resultado) -> None:
         "switchport access vlan 8",
         "switchport access vlan 10",
         "spanning-tree bpduguard enable",
+        "switchport port-security",
+        "switchport port-security violation shutdown",
+        "switchport port-security mac-address sticky",
+        "ip dhcp snooping",
+        "ip dhcp snooping trust",
+        "interface range fastEthernet 0/7 - 24",
+        "shutdown",
     ]
     for item in obrigatorios:
         if tem(texto, item):
             res.passou(f"{nome}: contem '{item}'")
         else:
             res.falhou(f"{nome}: falta '{item}'")
+
+    validar_hardening(texto, nome, res)
 
     m = re.search(
         r"interface gigabitEthernet 0/2\b(.*?)(?:\ninterface |\Z)",

@@ -1,9 +1,39 @@
 ! =========================================================
 ! RT-02 — Roteador da Matriz (Router-on-a-Stick)
 ! VLANs: 3 Servidores | 5 Colaboradores | 8 TI | 10 IoT
+! + ACLs inter-VLAN + hardening
 ! =========================================================
 enable
 configure terminal
+
+! 0. Hardening basico
+enable secret Senai@Enable2026
+service password-encryption
+service timestamps log datetime msec
+no ip http server
+no ip http secure-server
+ip domain-name senai.local
+username admin privilege 15 secret Senai@Admin2026
+
+banner motd #
+=========================================================
+ ATENCAO: Acesso restrito a autorizados do SENAI.
+ Equipamento: RT-02 (Matriz). Lab academico.
+=========================================================
+#
+
+crypto key generate rsa general-keys modulus 1024
+
+line console 0
+ logging synchronous
+ exec-timeout 5 0
+ login local
+line vty 0 4
+ transport input ssh
+ login local
+line vty 5 15
+ transport input ssh
+ login local
 
 ! 1. Nome do equipamento
 hostname RT-02
@@ -16,7 +46,7 @@ interface gigabitEthernet 0/0
 
 ! 3. Subinterfaces (Gateways das VLANs)
 
-! VLAN 3 — Servidores
+! VLAN 3 — Servidores (TI administra; acesso aberto a gateways/DNS)
 interface gigabitEthernet 0/0.3
  description GATEWAY_VLAN03_SERVIDORES
  encapsulation dot1Q 3
@@ -24,13 +54,15 @@ interface gigabitEthernet 0/0.3
  exit
 
 ! VLAN 5 — Colaboradores
+! Politica: DHCP + ping/DNS do servidor; NAO acessa hosts da VLAN TI
 interface gigabitEthernet 0/0.5
  description GATEWAY_VLAN05_COLABORADORES
  encapsulation dot1Q 5
  ip address 192.168.5.1 255.255.255.0
+ ip access-group ACL_COLAB_IN in
  exit
 
-! VLAN 8 — TI
+! VLAN 8 — TI (admins: sem ACL restritiva de saida)
 interface gigabitEthernet 0/0.8
  description GATEWAY_VLAN08_TI
  encapsulation dot1Q 8
@@ -38,10 +70,12 @@ interface gigabitEthernet 0/0.8
  exit
 
 ! VLAN 10 — IoT
+! Politica: DHCP + DNS/servidor; NAO acessa TI nem Colaboradores
 interface gigabitEthernet 0/0.10
  description GATEWAY_VLAN10_IOT
  encapsulation dot1Q 10
  ip address 192.168.10.1 255.255.255.0
+ ip access-group ACL_IOT_IN in
  exit
 
 ! 4. Interface WAN de subida para o RT-00
@@ -56,15 +90,49 @@ interface gigabitEthernet 0/1
 ! 5. Rota padrao de saida da Matriz para a borda/nuvem (RT-00)
 ip route 0.0.0.0 0.0.0.0 10.0.0.1
 
-! 6. Excecoes DHCP (gateways e IPs estaticos conhecidos)
+! 6. ACL — VLAN 10 IoT (inbound)
+ip access-list extended ACL_IOT_IN
+ remark IoT: DHCP
+ permit udp any eq 68 any eq 67
+ remark IoT: gateway local
+ permit icmp any host 192.168.10.1
+ remark IoT: DNS e servidor Matriz
+ permit udp 192.168.10.0 0.0.0.255 host 192.168.3.10 eq 53
+ permit icmp 192.168.10.0 0.0.0.255 host 192.168.3.10
+ remark WLAN atras do Wi-Fi (se nao houver NAT no WRT)
+ permit udp 192.168.15.0 0.0.0.255 host 192.168.3.10 eq 53
+ permit icmp 192.168.15.0 0.0.0.255 host 192.168.3.10
+ remark IoT NAO acessa TI
+ deny   ip 192.168.10.0 0.0.0.255 192.168.8.0 0.0.0.255
+ deny   ip 192.168.15.0 0.0.0.255 192.168.8.0 0.0.0.255
+ remark IoT NAO acessa hosts Colaboradores
+ deny   ip 192.168.10.0 0.0.0.255 192.168.5.0 0.0.0.255
+ deny   ip 192.168.15.0 0.0.0.255 192.168.5.0 0.0.0.255
+ remark Demais destinos (Internet via borda, gateways)
+ permit ip any any
+
+! 7. ACL — VLAN 5 Colaboradores (inbound)
+ip access-list extended ACL_COLAB_IN
+ remark Colab: DHCP
+ permit udp any eq 68 any eq 67
+ remark Colab: gateway local
+ permit icmp any host 192.168.5.1
+ remark Colab: DNS e servidor Matriz
+ permit udp 192.168.5.0 0.0.0.255 host 192.168.3.10 eq 53
+ permit icmp 192.168.5.0 0.0.0.255 host 192.168.3.10
+ remark Colab NAO acessa hosts TI
+ deny   ip 192.168.5.0 0.0.0.255 192.168.8.0 0.0.0.255
+ remark Demais (roteamento/Internet)
+ permit ip any any
+
+! 8. Excecoes DHCP (gateways e IPs estaticos conhecidos)
 !    Faixa efetiva de DHCP: .21 - .254 em cada VLAN
 ip dhcp excluded-address 192.168.3.1 192.168.3.20
 ip dhcp excluded-address 192.168.5.1 192.168.5.20
 ip dhcp excluded-address 192.168.8.1 192.168.8.20
 ip dhcp excluded-address 192.168.10.1 192.168.10.20
 
-! 7. DHCP — VLAN 5 (Colaboradores)
-!    Servidor Matriz fica estatico em 192.168.3.10 (fora de pool)
+! 9. DHCP — VLAN 5 (Colaboradores)
 ip dhcp pool DHCP_MATRIZ_VLAN5
  network 192.168.5.0 255.255.255.0
  default-router 192.168.5.1
@@ -72,7 +140,7 @@ ip dhcp pool DHCP_MATRIZ_VLAN5
  domain-name matriz.local
  lease 1 0 0
 
-! 8. DHCP — VLAN 8 (TI)
+! 10. DHCP — VLAN 8 (TI)
 ip dhcp pool DHCP_MATRIZ_VLAN8
  network 192.168.8.0 255.255.255.0
  default-router 192.168.8.1
@@ -80,7 +148,7 @@ ip dhcp pool DHCP_MATRIZ_VLAN8
  domain-name matriz.local
  lease 1 0 0
 
-! 9. DHCP — VLAN 10 (IoT wireless; roteador Wi-Fi usa IP estatico .2)
+! 11. DHCP — VLAN 10 (IoT wireless; roteador Wi-Fi usa IP estatico .2)
 ip dhcp pool DHCP_MATRIZ_VLAN10
  network 192.168.10.0 255.255.255.0
  default-router 192.168.10.1
@@ -88,6 +156,6 @@ ip dhcp pool DHCP_MATRIZ_VLAN10
  domain-name iot.local
  lease 1 0 0
 
-! 10. Salvar configuracoes
+! 12. Salvar configuracoes
 end
 write memory

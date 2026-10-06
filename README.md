@@ -109,6 +109,18 @@ PC> ipconfig /all   (DNS deve ser 192.168.3.10)
 3. Validar o cenário afetado no Packet Tracer  
 4. Commitar
 
+## Segurança (ACLs + hardening)
+
+| Recurso | Onde |
+|---|---|
+| `enable secret`, SSH, banner, `no ip http server` | RT-00/01/02, SW-01/02 |
+| ACL IoT → nega TI e Colaboradores (permite DNS/servidor) | RT-02 `ACL_IOT_IN` |
+| ACL Colaboradores → nega TI (permite DNS/servidor) | RT-02 `ACL_COLAB_IN` |
+| ACL IoT Filial → nega TI da Matriz | RT-01 `ACL_FILIAL_IOT_IN` |
+| Port security + DHCP snooping + portas ociosas down | SW-01, SW-02 |
+
+**Lab only:** `admin` / `Senai@Admin2026`, enable `Senai@Enable2026` — não usar em produção.
+
 ## O que foi corrigido / completado
 
 - Documentação corrigida (arquivos de doc com o conteúdo certo)
@@ -119,6 +131,7 @@ PC> ipconfig /all   (DNS deve ser 192.168.3.10)
 - NAT + rota padrão + interface de Internet no RT-00 (Cloud `200.100.50.2`)
 - Configs de hosts (servidor e PCs) documentadas
 - `spanning-tree portfast` + `bpduguard` nas portas de acesso
+- **ACLs inter-VLAN** (IoT/Colab ≠ TI) e **hardening** (SSH, secrets, banners, port security, DHCP snooping)
 - Comando de diagnóstico corrigido: `show ip interface` (singular)
 - SSIDs `REDE_IOT_MATRIZ` e `REDE_IOT_FILIAL` na doc e nos testes
 - `TESTES.md` + `scripts/validar_configs.py` (validação automática das configs)

@@ -146,16 +146,44 @@ RT-00 (Borda):
   - NAT overload: ACL 1 (redes internas) -> g0/0
 
 
-7. SEGURANCA / BOAS PRATICAS APLICADAS
+7. SEGURANCA / HARDENING APLICADO
 --------------------------------------------------------------------------
+7.1 Hardening IOS (RT-00, RT-01, RT-02, SW-01, SW-02)
+- enable secret (lab: Senai@Enable2026) + username admin (Senai@Admin2026)
+- service password-encryption
+- SSH habilitado (crypto key rsa + line vty transport input ssh)
+- no ip http server / no ip http secure-server
+- banner motd de advertencia
+- console/vty: login local, exec-timeout, logging synchronous
+
+7.2 ACLs inter-VLAN
+| ACL                  | Onde              | Politica |
+|----------------------|-------------------|----------|
+| ACL_IOT_IN           | RT-02 g0/0.10 in  | IoT: DHCP+DNS/servidor; NAO acessa TI nem Colab |
+| ACL_COLAB_IN         | RT-02 g0/0.5 in   | Colab: DHCP+DNS/servidor; NAO acessa TI |
+| ACL_FILIAL_IOT_IN    | RT-01 g0/0.10 in  | IoT filial: DHCP+DNS; NAO acessa TI da Matriz |
+
+VLAN 8 (TI) e VLAN 1 (PCs filial) sem ACL restritiva de saida (admins/uso geral).
+
+7.3 Hardening L2 (SW-01 / SW-02)
 - Trunks com "switchport trunk allowed vlan" explicito
-- Wi-Fi: WPA2-Personal (AES)
+- Portas de acesso: portfast + bpduguard
+- Port security: maximum 1, violation shutdown, mac-address sticky
+- DHCP snooping (uplink em trust)
+- Portas ociosas f0/7-24 em shutdown
+
+7.4 Wi-Fi
+- WPA2-Personal (AES)
   - SSID REDE_IOT_MATRIZ (Matriz)
   - SSID REDE_IOT_FILIAL (Filial)
-- Portas de acesso com "spanning-tree portfast" + "bpduguard"
+
+7.5 Outros
 - DHCP com faixas excluidas (.1-.20) para gateways e hosts estaticos
 - NAT na borda para saida a Internet
 - DNS corporativo unico (192.168.3.10) em todos os pools
+
+ATENCAO: senhas em texto sao apenas para o LAB SENAI.
+Nao usar em producao; rotacionar e guardar em cofre.
 
 
 8. ARQUIVOS DO PROJETO

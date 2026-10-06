@@ -1,11 +1,39 @@
 ! =========================================================
 ! SW-01 — Switch da Filial
-! VLAN 1  : PCs locais (PC-01, PC-02, PC-03)
-! VLAN 10 : Roteador Wi-Fi IoT
-! Uplink  : trunk para RT-01 (Router-on-a-Stick)
+! VLAN 1 (PCs) + VLAN 10 (Wi-Fi IoT) + trunk RT-01
+! Hardening: port security, DHCP snooping, portas ociosas
 ! =========================================================
 enable
 configure terminal
+
+! 0. Hardening basico
+enable secret Senai@Enable2026
+service password-encryption
+service timestamps log datetime msec
+no ip http server
+no ip http secure-server
+ip domain-name senai.local
+username admin privilege 15 secret Senai@Admin2026
+
+banner motd #
+=========================================================
+ ATENCAO: Acesso restrito a autorizados do SENAI.
+ Equipamento: SW-01 (Filial). Lab academico.
+=========================================================
+#
+
+crypto key generate rsa general-keys modulus 1024
+
+line console 0
+ logging synchronous
+ exec-timeout 5 0
+ login local
+line vty 0 4
+ transport input ssh
+ login local
+line vty 5 15
+ transport input ssh
+ login local
 
 ! 1. Nome do comutador
 hostname SW-01
@@ -34,6 +62,10 @@ interface fastEthernet 0/2
  switchport access vlan 1
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
@@ -43,6 +75,10 @@ interface fastEthernet 0/3
  switchport access vlan 1
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
@@ -52,6 +88,10 @@ interface fastEthernet 0/4
  switchport access vlan 1
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
@@ -62,9 +102,26 @@ interface fastEthernet 0/6
  switchport access vlan 10
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
-! 6. Salvar configuracoes
+! 6. Portas nao utilizadas — shutdown
+interface range fastEthernet 0/7 - 24
+ description PORTA_OCIOSA
+ shutdown
+ exit
+
+! 7. DHCP Snooping
+ip dhcp snooping
+ip dhcp snooping vlan 1,10
+interface gigabitEthernet 0/1
+ ip dhcp snooping trust
+ exit
+
+! 8. Salvar configuracoes
 end
 write memory

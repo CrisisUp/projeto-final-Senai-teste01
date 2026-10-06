@@ -1,13 +1,39 @@
 ! =========================================================
 ! SW-02 — Switch da Matriz
-! VLAN 3  : Servidor Matriz
-! VLAN 5  : PC-04 Colaboradores
-! VLAN 8  : PC-05 TI
-! VLAN 10 : Roteador Wi-Fi IoT
-! Uplink  : trunk para RT-02 (Router-on-a-Stick)
+! VLAN 3/5/8/10 + trunk RT-02
+! Hardening: port security, DHCP snooping, portas ociosas
 ! =========================================================
 enable
 configure terminal
+
+! 0. Hardening basico
+enable secret Senai@Enable2026
+service password-encryption
+service timestamps log datetime msec
+no ip http server
+no ip http secure-server
+ip domain-name senai.local
+username admin privilege 15 secret Senai@Admin2026
+
+banner motd #
+=========================================================
+ ATENCAO: Acesso restrito a autorizados do SENAI.
+ Equipamento: SW-02 (Matriz). Lab academico.
+=========================================================
+#
+
+crypto key generate rsa general-keys modulus 1024
+
+line console 0
+ logging synchronous
+ exec-timeout 5 0
+ login local
+line vty 0 4
+ transport input ssh
+ login local
+line vty 5 15
+ transport input ssh
+ login local
 
 ! 1. Nome do comutador
 hostname SW-02
@@ -46,26 +72,38 @@ interface gigabitEthernet 0/2
  switchport access vlan 3
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
-! PC-04 (VLAN 5 - Colaboradores) — recebe DHCP do RT-02
+! PC-04 (VLAN 5 - Colaboradores)
 interface fastEthernet 0/4
  description CONEXAO_PC04_COLABORADORES
  switchport mode access
  switchport access vlan 5
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
-! PC-05 (VLAN 8 - TI) — recebe DHCP do RT-02
+! PC-05 (VLAN 8 - TI)
 interface fastEthernet 0/5
  description CONEXAO_PC05_TI
  switchport mode access
  switchport access vlan 8
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
@@ -76,9 +114,26 @@ interface fastEthernet 0/6
  switchport access vlan 10
  spanning-tree portfast
  spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
  no shutdown
  exit
 
-! 5. Salvar configuracoes
+! 5. Portas nao utilizadas — shutdown (boas praticas)
+interface range fastEthernet 0/7 - 24
+ description PORTA_OCIOSA
+ shutdown
+ exit
+
+! 6. DHCP Snooping
+ip dhcp snooping
+ip dhcp snooping vlan 3,5,8,10
+interface gigabitEthernet 0/1
+ ip dhcp snooping trust
+ exit
+
+! 7. Salvar configuracoes
 end
 write memory

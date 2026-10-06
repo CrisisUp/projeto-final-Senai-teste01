@@ -1,8 +1,38 @@
 ! =========================================================
 ! RT-00 — Roteador de Borda (Matriz <-> Filial <-> Internet)
+! Hardening + NAT + rotas
 ! =========================================================
 enable
 configure terminal
+
+! 0. Hardening basico
+enable secret Senai@Enable2026
+service password-encryption
+service timestamps log datetime msec
+no ip http server
+no ip http secure-server
+ip domain-name senai.local
+username admin privilege 15 secret Senai@Admin2026
+
+banner motd #
+=========================================================
+ ATENCAO: Acesso restrito a autorizados do SENAI.
+ Uso somente em ambiente academico/lab.
+=========================================================
+#
+
+crypto key generate rsa general-keys modulus 1024
+
+line console 0
+ logging synchronous
+ exec-timeout 5 0
+ login local
+line vty 0 4
+ transport input ssh
+ login local
+line vty 5 15
+ transport input ssh
+ login local
 
 ! 1. Nome do equipamento
 hostname RT-00
