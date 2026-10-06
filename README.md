@@ -61,6 +61,8 @@ topologia Matriz + Filial, VLANs, Router-on-a-Stick, WAN estática, DHCP e NAT.
 | `codigo SW-01.txt` | Switch da Filial (VLAN 1 e 10, trunk) |
 | `codigo SW-02.txt` | Switch da Matriz (VLANs 3/5/8/10, trunk) |
 | `codigo WIFI-IOT.txt` | Config dos roteadores Wi-Fi (GUI) |
+| `TESTES.md` | Matriz de testes (automáticos + Packet Tracer) |
+| `scripts/validar_configs.py` | Valida configs .txt × IP plan |
 
 ## Como usar no Packet Tracer
 
@@ -71,9 +73,21 @@ topologia Matriz + Filial, VLANs, Router-on-a-Stick, WAN estática, DHCP e NAT.
    - Servidor: estático `192.168.3.10/24`, GW `192.168.3.1`
    - PCs Matriz/Filial: **DHCP** (ou IP estático conforme a doc técnica)
 5. Cloud/Internet: se não existir no `.pkt`, crie o dispositivo e use gateway `200.100.50.2` em `RT-00 g0/0`.
-6. Salve o `.pkt` e valide com os comandos de `Comandos de Diagnosticos e Validacao.txt`.
+6. Salve o `.pkt` e valide conforme `TESTES.md` e `Comandos de Diagnosticos e Validacao.txt`.
 
-## Validação mínima
+## Validação
+
+### Automatizado (configs do repositório)
+
+```bash
+python scripts/validar_configs.py
+```
+
+O script confere se os `codigo *.txt`, a documentação e o README batem com o IP plan (DNS corporativo, gateways, trunks, rotas, NAT, SSIDs). Exit code `0` = OK.
+
+### Manual (Packet Tracer)
+
+Comandos mínimos no lab (detalhe completo em `TESTES.md`):
 
 ```text
 SW-02# show vlan brief
@@ -88,6 +102,13 @@ PC-04> ping 192.168.8.1
 PC> ipconfig /all   (DNS deve ser 192.168.3.10)
 ```
 
+### Fluxo recomendado
+
+1. Editar configs/doc  
+2. `python scripts/validar_configs.py`  
+3. Validar o cenário afetado no Packet Tracer  
+4. Commitar
+
 ## O que foi corrigido / completado
 
 - Documentação corrigida (arquivos de doc com o conteúdo certo)
@@ -100,4 +121,5 @@ PC> ipconfig /all   (DNS deve ser 192.168.3.10)
 - `spanning-tree portfast` + `bpduguard` nas portas de acesso
 - Comando de diagnóstico corrigido: `show ip interface` (singular)
 - SSIDs `REDE_IOT_MATRIZ` e `REDE_IOT_FILIAL` na doc e nos testes
+- `TESTES.md` + `scripts/validar_configs.py` (validação automática das configs)
 - `README.md`, `codigo WIFI-IOT.txt` e `.gitignore`

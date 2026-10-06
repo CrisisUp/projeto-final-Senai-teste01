@@ -171,6 +171,8 @@ RT-00 (Borda):
 | codigo SW-01.txt                        | Config completa SW-01          |
 | codigo SW-02.txt                        | Config completa SW-02          |
 | codigo WIFI-IOT.txt                     | Config dos roteadores Wi-Fi    |
+| TESTES.md                               | Matriz de testes (auto + PT)   |
+| scripts/validar_configs.py              | Validacao automatica das configs|
 | README.md                               | Guia rapido do repositorio     |
 
 
